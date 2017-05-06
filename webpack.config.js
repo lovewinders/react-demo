@@ -6,17 +6,18 @@
  *Date: 2017-05-04 14:04
  */
 const htmlWebpackPlugin = require('html-webpack-plugin');
+const extractTextWebpackPlugin = require('extract-text-webpack-plugin');
 const path = require('path');
 
 module.exports = {
     context: __dirname,
-    entry: ['./src/index.jsx'],
+    entry: ['./src/app.jsx'],
     output: {
-        path: path.join(__dirname, 'dist'),
+        path: path.join(__dirname, 'build'),
         filename: 'js/[name].bundle.js'
     },
     devServer: {
-        contentBase: path.join(__dirname, "dist"),
+        contentBase: path.join(__dirname, "build"),
         compress: true,
         port: 9000
     },
@@ -28,10 +29,7 @@ module.exports = {
                 exclude: path.join(__dirname, 'node_modules'),
                 use: [
                     {
-                        loader: 'babel-loader',
-                        options: {
-                            presets: ['es2015','react','stage-0']
-                        }
+                        loader: 'babel-loader'
                     }/*,
                     {
                         loader: 'jsx-loader'
@@ -40,40 +38,37 @@ module.exports = {
             },
             {
                 test: /\.scss$/,
-                use: [
-                    {
-                        loader: 'style-loader'
-                    },
-                    {
-                        loader: 'css-loader'
-                    },
-                    {
-                        loader: 'sass-loader'
-                    }
-                ]
+                use: extractTextWebpackPlugin.extract({
+                    fallback: 'style-loader',
+                    //resolve-url-loader may be chained before sass-loader if necessary
+                    use: ['css-loader', 'sass-loader']
+                })
             },
             {
                 test: /\.css$/,
-                use: [//['style-loader','css-loader','postcss-loader']
-                    {
-                        loader: 'style-loader'
-                    },
-                    {
-                        loader: 'css-loader'
-                    },
-                    {
-                        loader: 'postcss-loader',
-                        options: {
-                            plugins: function(){
-                                return [
-                                    require('autoprefixer')({
-                                        browsers: ['last 5 versions']
-                                    })
-                                ]
+                use: extractTextWebpackPlugin.extract({
+                    fallback: "style-loader",
+                    use: [
+                        {
+                            loader: 'style-loader'
+                        },
+                        {
+                            loader: 'css-loader'
+                        },
+                        {
+                            loader: 'postcss-loader',
+                            options: {
+                                plugins: function () {
+                                    return [
+                                        require('autoprefixer')({
+                                            browsers: ['last 5 versions']
+                                        })
+                                    ]
+                                }
                             }
                         }
-                    }
-                ]
+                    ]
+                })
             },
             {
                 test: /\.html$/,
@@ -102,6 +97,7 @@ module.exports = {
             filename: 'index.html',
             template: 'index.html',
             inject: 'body'
-        })
+        }),
+        new extractTextWebpackPlugin("style.css")
     ]
 };
